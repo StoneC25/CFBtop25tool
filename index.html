@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Football Top 25 Ranker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: #1e3c72;
+            margin-bottom: 16px;
+            font-size: 1.3em;
+            border-bottom: 3px solid #2a5298;
+            padding-bottom: 8px;
+        }
+
+        .search-filter {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #2a5298;
+            background: white;
+            color: #2a5298;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background: #f0f4ff;
+        }
+
+        .filter-btn.active {
+            background: #2a5298;
+            color: white;
+        }
+
+        .team-list {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .team-item {
+            padding: 10px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .team-item:hover {
+            background: #e8f4f8;
+            border-color: #2a5298;
+            transform: translateX(4px);
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #1e3c72;
+        }
+
+        .team-conference {
+            font-size: 10px;
+            color: #666;
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 10px;
+        }
+
+        .ranked-list {
+            min-height: 400px;
+            max-height: 650px;
+            overflow-y: auto;
+            border: 2px dashed #2a5298;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .ranked-item {
+            padding: 6px 8px;
+            margin: 2px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .ranked-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .ranked-item.dragging {
+            opacity: 0.5;
+        }
+
+        .rank-number {
+            background: white;
+            color: #764ba2;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .ranked-team-info {
+            flex: 1;
+        }
+
+        .remove-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #2a5298;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e3c72;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 82, 152, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-2px);
+        }
+
+        .count-badge {
+            background: #dc3545;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 12px;
+            }
+            
+            .panel {
+                padding: 12px;
+            }
+            
+            h2 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+            
+            .team-list {
+                max-height: 400px;
+            }
+            
+            .ranked-list {
+                max-height: 500px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                gap: 12px;
+            }
+            
+            h1 {
+                font-size: 1.3em;
+            }
+            
+            .panel {
+                padding: 10px;
+            }
+            
+            .search-box {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .team-item {
+                padding: 8px;
+                font-size: 13px;
+            }
+            
+            .team-name {
+                font-size: 13px;
+            }
+            
+            .team-conference {
+                font-size: 9px;
+                padding: 2px 5px;
+            }
+            
+            .ranked-item {
+                padding: 5px 6px;
+                gap: 6px;
+            }
+            
+            .rank-number {
+                width: 22px;
+                height: 22px;
+                font-size: 10px;
+            }
+            
+            .remove-btn {
+                width: 20px;
+                height: 20px;
+                font-size: 13px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            .action-buttons {
+                gap: 8px;
+                margin-top: 12px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a5298;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1e3c72;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏈 College Football Top 25 Ranker</h1>
+        
+        <div class="panel">
+            <h2>Available Teams</h2>
+            
+            <div class="search-filter">
+                <input 
+                    type="text" 
+                    class="search-box" 
+                    id="searchBox" 
+                    placeholder="Search teams..."
+                >
+                
+                <div class="filter-section" id="filterButtons"></div>
+            </div>
+            
+            <div class="team-list" id="teamList"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>
+                Your Top 25 
+                <span class="count-badge" id="countBadge">0/25</span>
+            </h2>
+            
+            <div class="ranked-list" id="rankedList">
+                <div class="empty-message">
+                    Click on teams to add them to your rankings
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="clearRankings()">Clear All</button>
+                <button class="btn btn-primary" onclick="exportRankings()">Export Rankings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // FBS Teams Data with conferences
+        const teams = [
+            // SEC
+            { name: "Alabama", conference: "SEC" },
+            { name: "Georgia", conference: "SEC" },
+            { name: "LSU", conference: "SEC" },
+            { name: "Texas", conference: "SEC" },
+            { name: "Oklahoma", conference: "SEC" },
+            { name: "Florida", conference: "SEC" },
+            { name: "Auburn", conference: "SEC" },
+            { name: "Tennessee", conference: "SEC" },
+            { name: "Texas A&M", conference: "SEC" },
+            { name: "Ole Miss", conference: "SEC" },
+            { name: "Mississippi State", conference: "SEC" },
+            { name: "Missouri", conference: "SEC" },
+            { name: "Arkansas", conference: "SEC" },
+            { name: "South Carolina", conference: "SEC" },
+            { name: "Kentucky", conference: "SEC" },
+            { name: "Vanderbilt", conference: "SEC" },
+            
+            // Big Ten
+            { name: "Ohio State", conference: "Big Ten" },
+            { name: "Michigan", conference: "Big Ten" },
+            { name: "Penn State", conference: "Big Ten" },
+            { name: "Oregon", conference: "Big Ten" },
+            { name: "USC", conference: "Big Ten" },
+            { name: "Washington", conference: "Big Ten" },
+            { name: "UCLA", conference: "Big Ten" },
+            { name: "Wisconsin", conference: "Big Ten" },
+            { name: "Iowa", conference: "Big Ten" },
+            { name: "Nebraska", conference: "Big Ten" },
+            { name: "Michigan State", conference: "Big Ten" },
+            { name: "Minnesota", conference: "Big Ten" },
+            { name: "Maryland", conference: "Big Ten" },
+            { name: "Rutgers", conference: "Big Ten" },
+            { name: "Indiana", conference: "Big Ten" },
+            { name: "Northwestern", conference: "Big Ten" },
+            { name: "Purdue", conference: "Big Ten" },
+            { name: "Illinois", conference: "Big Ten" },
+            
+            // ACC
+            { name: "Clemson", conference: "ACC" },
+            { name: "Florida State", conference: "ACC" },
+            { name: "Miami", conference: "ACC" },
+            { name: "North Carolina", conference: "ACC" },
+            { name: "NC State", conference: "ACC" },
+            { name: "Virginia Tech", conference: "ACC" },
+            { name: "Pittsburgh", conference: "ACC" },
+            { name: "Louisville", conference: "ACC" },
+            { name: "Virginia", conference: "ACC" },
+            { name: "Duke", conference: "ACC" },
+            { name: "Wake Forest", conference: "ACC" },
+            { name: "Georgia Tech", conference: "ACC" },
+            { name: "Boston College", conference: "ACC" },
+            { name: "Syracuse", conference: "ACC" },
+            { name: "California", conference: "ACC" },
+            { name: "Stanford", conference: "ACC" },
+            { name: "SMU", conference: "ACC" },
+            
+            // Big 12
+            { name: "Kansas State", conference: "Big 12" },
+            { name: "TCU", conference: "Big 12" },
+            { name: "Baylor", conference: "Big 12" },
+            { name: "Oklahoma State", conference: "Big 12" },
+            { name: "Texas Tech", conference: "Big 12" },
+            { name: "Kansas", conference: "Big 12" },
+            { name: "West Virginia", conference: "Big 12" },
+            { name: "Iowa State", conference: "Big 12" },
+            { name: "Cincinnati", conference: "Big 12" },
+            { name: "UCF", conference: "Big 12" },
+            { name: "Houston", conference: "Big 12" },
+            { name: "BYU", conference: "Big 12" },
+            { name: "Arizona", conference: "Big 12" },
+            { name: "Arizona State", conference: "Big 12" },
+            { name: "Colorado", conference: "Big 12" },
+            { name: "Utah", conference: "Big 12" },
+            
+            // Pac-12 (remaining teams)
+            { name: "Washington State", conference: "Pac-12" },
+            { name: "Oregon State", conference: "Pac-12" },
+            
+            // Group of Five
+            { name: "Boise State", conference: "Mountain West" },
+            { name: "Fresno State", conference: "Mountain West" },
+            { name: "San Diego State", conference: "Mountain West" },
+            { name: "Air Force", conference: "Mountain West" },
+            { name: "Wyoming", conference: "Mountain West" },
+            { name: "Colorado State", conference: "Mountain West" },
+            { name: "New Mexico", conference: "Mountain West" },
+            { name: "UNLV", conference: "Mountain West" },
+            { name: "Nevada", conference: "Mountain West" },
+            { name: "San Jose State", conference: "Mountain West" },
+            { name: "Utah State", conference: "Mountain West" },
+            { name: "Hawaii", conference: "Mountain West" },
+            
+            { name: "Memphis", conference: "American" },
+            { name: "Tulane", conference: "American" },
+            { name: "SMU", conference: "American" },
+            { name: "South Florida", conference: "American" },
+            { name: "Tulsa", conference: "American" },
+            { name: "Navy", conference: "American" },
+            { name: "Temple", conference: "American" },
+            { name: "East Carolina", conference: "American" },
+            { name: "UAB", conference: "American" },
+            { name: "UTSA", conference: "American" },
+            { name: "North Texas", conference: "American" },
+            { name: "Rice", conference: "American" },
+            { name: "Florida Atlantic", conference: "American" },
+            { name: "Charlotte", conference: "American" },
+            
+            { name: "App State", conference: "Sun Belt" },
+            { name: "Coastal Carolina", conference: "Sun Belt" },
+            { name: "Louisiana", conference: "Sun Belt" },
+            { name: "Troy", conference: "Sun Belt" },
+            { name: "South Alabama", conference: "Sun Belt" },
+            { name: "Marshall", conference: "Sun Belt" },
+            { name: "Georgia State", conference: "Sun Belt" },
+            { name: "Georgia Southern", conference: "Sun Belt" },
+            { name: "Arkansas State", conference: "Sun Belt" },
+            { name: "Texas State", conference: "Sun Belt" },
+            { name: "ULM", conference: "Sun Belt" },
+            { name: "Southern Miss", conference: "Sun Belt" },
+            { name: "Old Dominion", conference: "Sun Belt" },
+            { name: "James Madison", conference: "Sun Belt" },
+            
+            { name: "Toledo", conference: "MAC" },
+            { name: "Ohio", conference: "MAC" },
+            { name: "Miami (OH)", conference: "MAC" },
+            { name: "Northern Illinois", conference: "MAC" },
+            { name: "Ball State", conference: "MAC" },
+            { name: "Western Michigan", conference: "MAC" },
+            { name: "Central Michigan", conference: "MAC" },
+            { name: "Eastern Michigan", conference: "MAC" },
+            { name: "Bowling Green", conference: "MAC" },
+            { name: "Kent State", conference: "MAC" },
+            { name: "Akron", conference: "MAC" },
+            { name: "Buffalo", conference: "MAC" },
+            
+            { name: "Liberty", conference: "C-USA" },
+            { name: "New Mexico State", conference: "C-USA" },
+            { name: "WKU", conference: "C-USA" },
+            { name: "Middle Tennessee", conference: "C-USA" },
+            { name: "UTEP", conference: "C-USA" },
+            { name: "FIU", conference: "C-USA" },
+            { name: "Jacksonville State", conference: "C-USA" },
+            { name: "Sam Houston", conference: "C-USA" },
+            { name: "Kennesaw State", conference: "C-USA" },
+            
+            // Independent
+            { name: "Notre Dame", conference: "Independent" },
+            { name: "Army", conference: "Independent" },
+            { name: "UConn", conference: "Independent" },
+            { name: "UMass", conference: "Independent" }
+        ];
+
+        let rankedTeams = [];
+        let currentFilter = 'All';
+        let draggedElement = null;
+
+        // Get unique conferences
+        const conferences = ['All', ...new Set(teams.map(t => t.conference))].sort();
+
+        // Initialize
+        function init() {
+            renderFilterButtons();
+            renderTeamList();
+            updateRankedList();
+        }
+
+        // Render filter buttons
+        function renderFilterButtons() {
+            const container = document.getElementById('filterButtons');
+            container.innerHTML = conferences.map(conf => 
+                `<button class="filter-btn ${conf === 'All' ? 'active' : ''}" onclick="filterByConference('${conf}')">${conf}</button>`
+            ).join('');
+        }
+
+        // Filter teams by conference
+        function filterByConference(conference) {
+            currentFilter = conference;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === conference);
+            });
+            renderTeamList();
+        }
+
+        // Render team list
+        function renderTeamList() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const filteredTeams = teams.filter(team => {
+                const matchesSearch = team.name.toLowerCase().includes(searchTerm);
+                const matchesFilter = currentFilter === 'All' || team.conference === currentFilter;
+                const notRanked = !rankedTeams.some(rt => rt.name === team.name);
+                return matchesSearch && matchesFilter && notRanked;
+            }).sort((a, b) => a.name.localeCompare(b.name));
+
+            const container = document.getElementById('teamList');
+            container.innerHTML = filteredTeams.map(team => `
+                <div class="team-item" onclick="addToRankings('${team.name}', '${team.conference}')">
+                    <span class="team-name">${team.name}</span>
+                    <span class="team-conference">${team.conference}</span>
+                </div>
+            `).join('');
+        }
+
+        // Add team to rankings
+        function addToRankings(name, conference) {
+            if (rankedTeams.length >= 25) {
+                alert('You can only rank 25 teams!');
+                return;
+            }
+            
+            rankedTeams.push({ name, conference });
+            renderTeamList();
+            updateRankedList();
+        }
+
+        // Remove from rankings
+        function removeFromRankings(index) {
+            rankedTeams.splice(index, 1);
+            renderTeamList();
+            updateRankedList();
+        }
+
+        // Update ranked list
+        function updateRankedList() {
+            const container = document.getElementById('rankedList');
+            document.getElementById('countBadge').textContent = `${rankedTeams.length}/25`;
+
+            if (rankedTeams.length === 0) {
+                container.innerHTML = '<div class="empty-message">Click on teams to add them to your rankings</div>';
+                return;
+            }
+
+            container.innerHTML = rankedTeams.map((team, index) => `
+                <div class="ranked-item" draggable="true" data-index="${index}">
+                    <div class="rank-number">${index + 1}</div>
+                    <div class="ranked-team-info">
+                        <div class="team-name" style="font-size: 12px; line-height: 1.2;">${team.name}</div>
+                        <div class="team-conference" style="color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.2); font-size: 9px; padding: 2px 5px; margin-top: 2px; display: inline-block;">${team.conference}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromRankings(${index})">×</button>
+                </div>
+            `).join('');
+
+            // Add drag and drop event listeners
+            document.querySelectorAll('.ranked-item').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+            });
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            if (draggedElement !== this) {
+                const draggedIndex = parseInt(draggedElement.dataset.index);
+                const targetIndex = parseInt(this.dataset.index);
+                
+                const draggedTeam = rankedTeams[draggedIndex];
+                rankedTeams.splice(draggedIndex, 1);
+                rankedTeams.splice(targetIndex, 0, draggedTeam);
+                
+                updateRankedList();
+            }
+            return false;
+        }
+
+        // Clear all rankings
+        function clearRankings() {
+            if (rankedTeams.length > 0 && confirm('Are you sure you want to clear all rankings?')) {
+                rankedTeams = [];
+                renderTeamList();
+                updateRankedList();
+            }
+        }
+
+        // Export rankings
+        function exportRankings() {
+            if (rankedTeams.length === 0) {
+                alert('Please add some teams to your rankings first!');
+                return;
+            }
+
+            let output = 'MY TOP 25 COLLEGE FOOTBALL RANKINGS\n';
+            output += '=' .repeat(50) + '\n\n';
+            
+            rankedTeams.forEach((team, index) => {
+                output += `${(index + 1).toString().padStart(2, ' ')}. ${team.name} (${team.conference})\n`;
+            });
+            
+            output += '\n' + '='.repeat(50) + '\n';
+            output += `Created on ${new Date().toLocaleDateString()}`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(output).then(() => {
+                alert('Rankings copied to clipboard!');
+            }).catch(() => {
+                // Fallback: show in alert
+                alert(output);
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', renderTeamList);
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
